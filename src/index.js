@@ -186,8 +186,8 @@ async function notifyEmail(env, summary) {
   if (env.EMAIL?.send) {
     try {
       await env.EMAIL.send({
-        from: { email: fromEmail, name: 'J Rides' },
-        to: [{ email: to }],
+        from: `J Rides <${fromEmail}>`,
+        to: to,
         subject: summary.title,
         text,
         html,
