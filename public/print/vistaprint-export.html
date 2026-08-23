@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>J Rides — VistaPrint export</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --accent: #C6FF3D;
+    --ink: #1a1a1a;
+    --muted: #6b6b6b;
+    --line: #E4E1D8;
+    --paper: #FCFCFA;
+  }
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  body{
+    background:#777;
+    font-family:'DM Sans', sans-serif;
+    color:var(--ink);
+    padding:24px;
+  }
+  /* VistaPrint bleed: 1083 × 633 */
+  .face{
+    width:1083px;
+    height:633px;
+    background:var(--paper);
+    position:relative;
+    overflow:hidden;
+    margin:0 0 24px;
+  }
+  .safe{
+    position:absolute;
+    top:37px; right:37px; bottom:37px; left:37px;
+    display:grid;
+    grid-template-columns: 1fr auto;
+    gap:36px;
+    align-items:stretch;
+  }
+  .copy{
+    display:flex;
+    flex-direction:column;
+    justify-content:space-between;
+    min-width:0;
+  }
+  .brand{
+    font-family:'Space Grotesk', sans-serif;
+    font-weight:600;
+    font-size:44px;
+    letter-spacing:-0.01em;
+    line-height:1.05;
+  }
+  .pin{
+    display:inline-block;
+    width:11px;height:11px;
+    border-radius:50%;
+    background:#1a1a1a;
+    margin-right:14px;
+    vertical-align:middle;
+    margin-top:-4px;
+  }
+  .promise{
+    font-size:22px;
+    color:var(--muted);
+    margin-top:12px;
+  }
+  .cta{
+    font-family:'Space Grotesk', sans-serif;
+    font-weight:600;
+    font-size:28px;
+    letter-spacing:-0.02em;
+    line-height:1.2;
+    margin:28px 0 0;
+  }
+  .cta span{ font-weight:600; }
+  .hint{
+    margin-top:10px;
+    font-size:20px;
+    color:#4a4a4a;
+    line-height:1.45;
+  }
+  .contact{
+    font-size:22px;
+    line-height:1.55;
+    color:#4a4a4a;
+  }
+  .contact .label{
+    font-size:15px;
+    text-transform:uppercase;
+    letter-spacing:0.1em;
+    color:#a3a099;
+    display:block;
+    margin-bottom:2px;
+  }
+  .contact b{ color:#1a1a1a; font-weight:600; }
+  .scan-col{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:12px;
+  }
+  .qr{
+    width:196px;
+    height:196px;
+    background:#fff;
+    border:2px solid var(--line);
+    padding:8px;
+    flex-shrink:0;
+  }
+  .qr img, .qr canvas{
+    width:100% !important;
+    height:100% !important;
+    display:block;
+  }
+  .scan-label{
+    font-family:'Space Grotesk', sans-serif;
+    font-size:16px;
+    font-weight:600;
+    letter-spacing:0.08em;
+    text-transform:uppercase;
+    color:#6b6b6b;
+  }
+
+  .green-bar::before{
+    content:"";
+    position:absolute;
+    left:0; top:0; bottom:0;
+    width:18px;
+    background:var(--accent);
+  }
+  .green .pin{ background:var(--accent); }
+  .green .brand .dot{ color:var(--accent); }
+  .green .cta span{
+    box-shadow: inset 0 -4px 0 var(--accent);
+  }
+  .green .scan-label{ color:#3d4a20; }
+</style>
+</head>
+<body>
+
+<!-- Combined single-sided: brand + CTA + phone + QR -->
+<div class="face" id="min-front">
+  <div class="safe">
+    <div class="copy">
+      <div>
+        <div class="brand"><span class="pin"></span>J<span class="dot">·</span>Rides</div>
+        <div class="promise">Flat rate · No surge</div>
+        <div class="cta">Scan to book on <span>j-rides.vip</span></div>
+        <div class="hint">Or call / text — same flat rate either way.</div>
+      </div>
+      <div class="contact">
+        <span class="label">Call or text</span>
+        <b>(323) 818-9982</b>
+      </div>
+    </div>
+    <div class="scan-col">
+      <div class="qr" id="qr-min-front"></div>
+      <div class="scan-label">Scan</div>
+    </div>
+  </div>
+</div>
+
+<div class="face green green-bar" id="min-g-front">
+  <div class="safe">
+    <div class="copy">
+      <div>
+        <div class="brand"><span class="pin"></span>J<span class="dot">·</span>Rides</div>
+        <div class="promise">Flat rate · No surge</div>
+        <div class="cta">Scan to book on <span>j-rides.vip</span></div>
+        <div class="hint">Or call / text — same flat rate either way.</div>
+      </div>
+      <div class="contact">
+        <span class="label">Call or text</span>
+        <b>(323) 818-9982</b>
+      </div>
+    </div>
+    <div class="scan-col">
+      <div class="qr" id="qr-min-g-front"></div>
+      <div class="scan-label">Scan</div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+  const url = "https://j-rides.vip";
+  function makeQR(id){
+    const el = document.getElementById(id);
+    new QRCode(el, {
+      text: url,
+      width: 320,
+      height: 320,
+      colorDark: "#1a1a1a",
+      colorLight: "#ffffff",
+      correctLevel: QRCode.CorrectLevel.M
+    });
+  }
+  ['qr-min-front','qr-min-g-front'].forEach(makeQR);
+  document.fonts.ready.then(() => {
+    document.documentElement.dataset.ready = "1";
+  });
+</script>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a2f73ab7adc249b1',t:'MTc4NzQ1NzgyNg=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>

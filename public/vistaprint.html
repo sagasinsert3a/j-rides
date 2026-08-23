@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>J Rides — Business cards</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0B0E12;
+    --muted:#5c6358;
+    --line:#d8d5cc;
+    --paper:#EDEBE6;
+    --accent:#C6FF3D;
+  }
+  *{ box-sizing:border-box; }
+  body{
+    margin:0;
+    font-family:'DM Sans', sans-serif;
+    color:var(--ink);
+    background:
+      radial-gradient(ellipse 70% 45% at 8% -8%, rgba(198,255,61,0.18), transparent 55%),
+      var(--paper);
+    padding:40px 20px 72px;
+    line-height:1.55;
+  }
+  main{ max-width:780px; margin:0 auto; }
+  h1{
+    font-family:'Space Grotesk', sans-serif;
+    font-size:clamp(26px, 4vw, 34px);
+    letter-spacing:-0.03em;
+    margin:0 0 8px;
+  }
+  .sub{ color:var(--muted); margin:0 0 32px; font-size:15px; max-width:36em; }
+  .styles{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:18px;
+  }
+  @media (max-width:640px){ .styles{ grid-template-columns:1fr; } }
+  .style{
+    background:#fff;
+    border:1px solid var(--line);
+    border-radius:16px;
+    padding:18px;
+  }
+  .style-head{
+    display:flex;
+    flex-wrap:wrap;
+    align-items:center;
+    gap:10px;
+    margin-bottom:12px;
+  }
+  .style-head h2{
+    font-family:'Space Grotesk', sans-serif;
+    font-size:18px;
+    letter-spacing:-0.02em;
+    margin:0;
+    font-weight:600;
+  }
+  .tag{
+    font-size:11px;
+    font-weight:700;
+    letter-spacing:0.06em;
+    text-transform:uppercase;
+    padding:3px 8px;
+    border-radius:999px;
+  }
+  .tag.plain{ background:#F5F4F0; border:1px solid var(--line); color:#6b6b6b; }
+  .tag.green{ background:var(--accent); color:var(--ink); }
+  .style img{
+    width:100%;
+    height:auto;
+    border:1px solid var(--line);
+    border-radius:8px;
+    background:#FCFCFA;
+    display:block;
+  }
+  .style a.dl{
+    display:inline-flex;
+    margin-top:14px;
+    font-family:'Space Grotesk', sans-serif;
+    font-size:12px;
+    font-weight:600;
+    letter-spacing:0.03em;
+    text-decoration:none;
+    background:var(--ink);
+    border:1px solid var(--ink);
+    color:#F5F6F3;
+    border-radius:999px;
+    padding:10px 16px;
+  }
+  .style a.dl:hover{ background:#222; }
+  .howto{
+    margin-top:32px;
+    padding-top:8px;
+  }
+  .howto h2{
+    font-family:'Space Grotesk', sans-serif;
+    font-size:15px;
+    letter-spacing:0.08em;
+    text-transform:uppercase;
+    margin:0 0 12px;
+  }
+  .howto ol{
+    margin:0;
+    padding-left:1.2em;
+  }
+  .howto li{ margin:0 0 8px; }
+  .howto a{ color:inherit; }
+  .note{
+    margin-top:22px;
+    font-size:13px;
+    color:var(--muted);
+  }
+</style>
+</head>
+<body>
+<main>
+  <h1>J Rides business cards</h1>
+  <p class="sub">One-sided cards — brand, scan-to-book, and phone on a single front. Download one file for VistaPrint (3.5″ × 2″, blank back).</p>
+
+  <div class="styles">
+    <section class="style" aria-labelledby="s-original">
+      <div class="style-head">
+        <h2 id="s-original">Original</h2>
+        <span class="tag plain">No green</span>
+      </div>
+      <img src="/print/j-rides-minimal-original-front.png" width="1083" height="633" alt="Original front">
+      <a class="dl" href="/print/j-rides-minimal-original-front.png" download>Download</a>
+    </section>
+
+    <section class="style" aria-labelledby="s-green">
+      <div class="style-head">
+        <h2 id="s-green">Soft green</h2>
+        <span class="tag green">Site accent</span>
+      </div>
+      <img src="/print/j-rides-minimal-green-front.png" width="1083" height="633" alt="Soft green front">
+      <a class="dl" href="/print/j-rides-minimal-green-front.png" download>Download</a>
+    </section>
+  </div>
+
+  <section class="howto">
+    <h2>VistaPrint</h2>
+    <ol>
+      <li>Open <a href="https://www.vistaprint.com/business-cards" target="_blank" rel="noopener">VistaPrint business cards</a> → standard <strong>3.5″ × 2″</strong>.</li>
+      <li>Choose <strong>Upload your design</strong>.</li>
+      <li>Upload the front PNG. For the back, pick <strong>blank</strong> / single-sided (no design).</li>
+      <li>Check the preview, pick paper/quantity, checkout.</li>
+    </ol>
+    <p class="note">File includes VistaPrint bleed (1083×633). Phone (323) 818-9982 · j-rides.vip</p>
+  </section>
+</main>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a2f73a7b0e2a6ca3',t:'MTc4NzQ1NzgxNg=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>

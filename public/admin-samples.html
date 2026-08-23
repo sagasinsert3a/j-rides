@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>J Rides — Live app sample log</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{ --ink:#0B0E12; --accent:#C6FF3D; --line:#E4E1D8; --mute:#6b6b6b; }
+  *{ box-sizing:border-box; }
+  body{ margin:0; font-family:'DM Sans',sans-serif; background:#F7F6F2; color:var(--ink); padding:32px 18px 80px; }
+  .wrap{ max-width:720px; margin:0 auto; }
+  h1{ font-family:'Space Grotesk',sans-serif; font-size:24px; margin:0 0 6px; letter-spacing:-0.02em; }
+  .sub{ color:var(--mute); font-size:13.5px; margin:0 0 24px; line-height:1.55; }
+  .panel{ background:#fff; border:1px solid var(--line); border-radius:14px; padding:20px; margin-bottom:18px; }
+  label{ display:block; font-size:12px; font-weight:600; letter-spacing:0.04em; text-transform:uppercase; color:var(--mute); margin:0 0 6px; }
+  input, select{ width:100%; padding:10px 12px; border:1px solid #D8D5CC; border-radius:8px; font:inherit; background:#FCFCFA; margin-bottom:12px; }
+  .row{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  @media (max-width:600px){ .row{ grid-template-columns:1fr; } }
+  button{ font-family:'Space Grotesk',sans-serif; font-weight:600; border:0; border-radius:999px; padding:12px 18px; cursor:pointer; background:var(--ink); color:#fff; }
+  button.secondary{ background:#fff; color:var(--ink); border:1px solid var(--line); }
+  .actions{ display:flex; flex-wrap:wrap; gap:10px; margin-top:8px; }
+  .hint{ font-size:12px; color:var(--mute); line-height:1.5; margin:0 0 14px; }
+  table{ width:100%; border-collapse:collapse; font-size:13px; }
+  th,td{ text-align:left; padding:8px 6px; border-bottom:1px solid var(--line); }
+  th{ font-family:'Space Grotesk',sans-serif; font-size:11px; text-transform:uppercase; letter-spacing:0.06em; color:var(--mute); }
+  .live{ display:inline-block; background:rgba(198,255,61,0.35); padding:4px 10px; border-radius:999px; font-size:12px; font-weight:700; font-family:'Space Grotesk',sans-serif; margin-bottom:12px; }
+  a{ color:var(--ink); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Live app sample log</h1>
+  <p class="sub">
+    Uber and Lyft block live competitor API use. The booking site stays near-live by blending KC rate cards,
+    time-of-day demand, and <strong>quotes you paste from the real apps</strong>. Log a sample in under a minute after checking the app.
+  </p>
+  <p><a href="index.html">← Back to booking site</a></p>
+
+  <div class="panel">
+    <div class="live" id="liveBadge">No samples yet</div>
+    <p class="hint">
+      Open Uber + Lyft for the same pickup/dropoff, copy <strong>Uber Premier</strong> and <strong>Lyft Extra Comfort</strong> prices, paste here.
+      Samples stay in this browser and immediately re-calibrate customer-facing estimates.
+    </p>
+    <form id="sampleForm">
+      <div class="row">
+        <div>
+          <label>Route preset</label>
+          <select id="preset">
+            <option value="custom">Custom</option>
+            <option value="mci">Lenexa → MCI</option>
+            <option value="loews">Lenexa → Loews KC</option>
+            <option value="plaza">Lenexa → Plaza</option>
+          </select>
+        </div>
+        <div>
+          <label>Airport trip?</label>
+          <select id="airport">
+            <option value="no">No</option>
+            <option value="yes">Yes (MCI fee)</option>
+          </select>
+        </div>
+      </div>
+      <div class="row">
+        <div>
+          <label>Miles</label>
+          <input id="miles" type="number" step="0.1" min="0.5" required value="28">
+        </div>
+        <div>
+          <label>Minutes</label>
+          <input id="minutes" type="number" step="1" min="1" required value="35">
+        </div>
+      </div>
+      <div class="row">
+        <div>
+          <label>Uber Premier price ($)</label>
+          <input id="uberPrice" type="number" step="0.01" min="0" placeholder="from Uber app">
+        </div>
+        <div>
+          <label>Lyft Extra Comfort price ($)</label>
+          <input id="lyftPrice" type="number" step="0.01" min="0" placeholder="from Lyft app">
+        </div>
+      </div>
+      <label>Note (optional)</label>
+      <input id="note" type="text" placeholder="e.g. Fri 5:40pm, light rain">
+      <div class="actions">
+        <button type="submit">Save sample &amp; recalibrate</button>
+        <button type="button" class="secondary" id="exportBtn">Export JSON</button>
+        <button type="button" class="secondary" id="clearBtn">Clear all</button>
+      </div>
+    </form>
+  </div>
+
+  <div class="panel">
+    <h2 style="font-family:'Space Grotesk',sans-serif;font-size:14px;letter-spacing:0.08em;text-transform:uppercase;color:#8a8a8a;margin:0 0 12px;">Recent samples</h2>
+    <table>
+      <thead>
+        <tr><th>When</th><th>Trip</th><th>Uber</th><th>Lyft</th><th></th></tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
+</div>
+
+<script src="js/pricing.js"></script>
+<script src="js/live-market.js"></script>
+<script>
+  const presets = {
+    mci: { miles: 28, minutes: 35, airport: 'yes' },
+    loews: { miles: 22, minutes: 32, airport: 'no' },
+    plaza: { miles: 20, minutes: 30, airport: 'no' },
+  };
+
+  const $ = (id) => document.getElementById(id);
+
+  $('preset').addEventListener('change', () => {
+    const p = presets[$('preset').value];
+    if (!p) return;
+    $('miles').value = p.miles;
+    $('minutes').value = p.minutes;
+    $('airport').value = p.airport;
+  });
+
+  function render() {
+    const samples = JRidesLiveMarket.loadSamples();
+    const snap = JRidesLiveMarket.snapshot();
+    $('liveBadge').textContent = snap.label + ' · Uber×' + snap.uberSurge.toFixed(2) + ' · Lyft×' + snap.lyftSurge.toFixed(2);
+
+    const tb = $('tbody');
+    tb.innerHTML = '';
+    if (!samples.length) {
+      tb.innerHTML = '<tr><td colspan="5" style="color:#8a8a8a">No samples yet — paste one from the apps.</td></tr>';
+      return;
+    }
+    samples.forEach((s) => {
+      const tr = document.createElement('tr');
+      const when = new Date(s.at).toLocaleString();
+      tr.innerHTML = `
+        <td>${when}</td>
+        <td>${s.miles} mi / ${s.minutes} min${s.airport ? ' · airport' : ''}${s.note ? '<br><span style="color:#8a8a8a">' + s.note + '</span>' : ''}</td>
+        <td>${s.uberPrice != null && s.uberPrice !== '' ? '$' + Number(s.uberPrice).toFixed(2) : '—'}</td>
+        <td>${s.lyftPrice != null && s.lyftPrice !== '' ? '$' + Number(s.lyftPrice).toFixed(2) : '—'}</td>
+        <td><button type="button" class="secondary" data-id="${s.id}" style="padding:6px 10px;font-size:11px">Delete</button></td>
+      `;
+      tb.appendChild(tr);
+    });
+    tb.querySelectorAll('button[data-id]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const next = JRidesLiveMarket.loadSamples().filter((s) => s.id !== btn.dataset.id);
+        JRidesLiveMarket.saveSamples(next);
+        render();
+      });
+    });
+  }
+
+  $('sampleForm').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const uberRaw = $('uberPrice').value;
+    const lyftRaw = $('lyftPrice').value;
+    if (uberRaw === '' && lyftRaw === '') {
+      alert('Enter at least one app price.');
+      return;
+    }
+    JRidesLiveMarket.addSample({
+      miles: parseFloat($('miles').value),
+      minutes: parseFloat($('minutes').value),
+      uberPrice: uberRaw === '' ? null : parseFloat(uberRaw),
+      lyftPrice: lyftRaw === '' ? null : parseFloat(lyftRaw),
+      airport: $('airport').value === 'yes',
+      note: $('note').value.trim(),
+      route: $('preset').value,
+    });
+    $('uberPrice').value = '';
+    $('lyftPrice').value = '';
+    $('note').value = '';
+    render();
+  });
+
+  $('exportBtn').addEventListener('click', () => {
+    const blob = new Blob([JSON.stringify(JRidesLiveMarket.loadSamples(), null, 2)], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'jrides-live-samples.json';
+    a.click();
+  });
+
+  $('clearBtn').addEventListener('click', () => {
+    if (confirm('Clear all samples in this browser?')) {
+      JRidesLiveMarket.clearSamples();
+      render();
+    }
+  });
+
+  render();
+</script>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a2f73a7aacd8d907',t:'MTc4NzQ1NzgxNg=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
