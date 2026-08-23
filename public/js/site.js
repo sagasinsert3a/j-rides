@@ -244,11 +244,41 @@
     window.location.href = 'sms:+13238189982&body=' + summary;
   }
 
+  const MIN_LEAD_MS = 2 * 60 * 60 * 1000;
+
+  function minPickupInput() {
+    const d = new Date(Date.now() + MIN_LEAD_MS);
+    d.setMinutes(Math.ceil(d.getMinutes() / 15) * 15, 0, 0);
+    const pad = (n) => String(n).padStart(2, '0');
+    return (
+      d.getFullYear() +
+      '-' +
+      pad(d.getMonth() + 1) +
+      '-' +
+      pad(d.getDate()) +
+      'T' +
+      pad(d.getHours()) +
+      ':' +
+      pad(d.getMinutes())
+    );
+  }
+
   bookForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     if (!lastQuote) return;
 
     const data = new FormData(bookForm);
+    const whenLocal = data.get('when');
+    const whenDate = whenLocal ? new Date(whenLocal) : null;
+    if (!whenDate || Number.isNaN(whenDate.getTime())) {
+      setStatus('Pick a valid pickup time.', 'error');
+      return;
+    }
+    if (whenDate.getTime() - Date.now() < MIN_LEAD_MS) {
+      setStatus('Bookings need at least 2 hours notice.', 'error');
+      return;
+    }
+
     const bookBtn = document.getElementById('bookBtn');
     const note = document.getElementById('bookNote');
     if (bookBtn) {
@@ -263,7 +293,8 @@
         body: JSON.stringify({
           name: data.get('name'),
           phone: data.get('phone'),
-          when: data.get('when'),
+          when: whenLocal,
+          whenIso: whenDate.toISOString(),
           pickup: pickup.value,
           dropoff: dropoff.value,
           amount: lastQuote.jrides.price,
@@ -275,6 +306,10 @@
         }),
       });
       const payload = await res.json().catch(() => ({}));
+      if (!res.ok && payload.error === 'lead_time') {
+        setStatus(payload.message || 'Bookings need at least 2 hours notice.', 'error');
+        return;
+      }
       if (res.ok && payload.url) {
         window.location.href = payload.url;
         return;
@@ -314,18 +349,7 @@
 
   const whenInput = bookForm.querySelector('[name="when"]');
   if (whenInput) {
-    const d = new Date(Date.now() + 2 * 60 * 60 * 1000);
-    d.setMinutes(Math.ceil(d.getMinutes() / 15) * 15, 0, 0);
-    const pad = (n) => String(n).padStart(2, '0');
-    whenInput.value =
-      d.getFullYear() +
-      '-' +
-      pad(d.getMonth() + 1) +
-      '-' +
-      pad(d.getDate()) +
-      'T' +
-      pad(d.getHours()) +
-      ':' +
-      pad(d.getMinutes());
+    whenInput.min = minPickupInput();
+    whenInput.value = whenInput.min;
   }
 })();

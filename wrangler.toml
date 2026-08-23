@@ -22,6 +22,7 @@ BOOKING_PHONE = "+13238189982"
 NOTIFY_EMAIL = "jeffreysila@gmail.com"
 NOTIFY_FROM_EMAIL = "booking@j-rides.vip"
 TIMEZONE = "America/Chicago"
+MIN_LEAD_MINUTES = "120"
 
 [[send_email]]
 name = "EMAIL"

@@ -118,6 +118,61 @@ function parseWhen(when) {
   return Number.isNaN(d.getTime()) ? null : d;
 }
 
+function pickupMs(whenStr, whenIso) {
+  if (whenIso) {
+    const t = Date.parse(whenIso);
+    if (!Number.isNaN(t)) return t;
+  }
+  if (!whenStr) return null;
+  if (/[zZ]|[+-]\d{2}:\d{2}$/.test(whenStr)) {
+    const t = Date.parse(whenStr);
+    return Number.isNaN(t) ? null : t;
+  }
+  const m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/.exec(whenStr);
+  if (!m) return null;
+  const [, y, mo, d, h, mi] = m;
+  const tz = 'America/Chicago';
+  const guess = Date.UTC(+y, +mo - 1, +d, +h, +mi);
+  const fmt = new Intl.DateTimeFormat('en-US', {
+    timeZone: tz,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  });
+  for (let offsetH = -14; offsetH <= 14; offsetH++) {
+    const candidate = guess - offsetH * 3600000;
+    const parts = fmt.formatToParts(new Date(candidate));
+    const get = (t) => parts.find((p) => p.type === t)?.value;
+    let ch = get('hour');
+    if (ch === '24') ch = '00';
+    if (`${y}-${mo}-${d}` === `${get('year')}-${get('month')}-${get('day')}` && `${h}:${mi}` === `${ch}:${get('minute')}`) {
+      return candidate;
+    }
+  }
+  return null;
+}
+
+function checkLeadTime(whenStr, whenIso, env) {
+  const minLead = Number(env.MIN_LEAD_MINUTES || 120);
+  const at = pickupMs(whenStr, whenIso);
+  if (at == null) return { ok: false, error: 'invalid_when', message: 'Pick a valid pickup time.' };
+  const leadMin = Math.round((at - Date.now()) / 60000);
+  if (leadMin < minLead) {
+    const hrs = minLead / 60;
+    return {
+      ok: false,
+      error: 'lead_time',
+      message: `Bookings need at least ${hrs} hour${hrs === 1 ? '' : 's'} notice.`,
+      leadMin,
+      minLead,
+    };
+  }
+  return { ok: true, leadMin, minLead };
+}
+
 function icsDate(d) {
   return d.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
 }
@@ -300,9 +355,13 @@ async function createCheckout(request, env) {
   const name = String(body.name || '').trim().slice(0, 80);
   const phone = String(body.phone || '').trim().slice(0, 40);
   const when = String(body.when || '').trim().slice(0, 40);
+  const whenIso = String(body.whenIso || '').trim().slice(0, 40);
   const pickup = String(body.pickup || '').trim().slice(0, 200);
   const dropoff = String(body.dropoff || '').trim().slice(0, 200);
   if (!name || !phone || !pickup || !dropoff) return json({ error: 'missing_fields' }, 400);
+
+  const lead = checkLeadTime(when, whenIso, env);
+  if (!lead.ok) return json({ error: lead.error, message: lead.message }, 400);
 
   const site = (env.SITE_URL || new URL(request.url).origin).replace(/\/$/, '');
   const params = new URLSearchParams();
