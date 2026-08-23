@@ -172,7 +172,7 @@ function bookingSummary(session) {
 }
 
 function emailConfigured(env) {
-  return Boolean(env.NOTIFY_EMAIL && (env.EMAIL?.send || env.RESEND_API_KEY));
+  return Boolean(env.NOTIFY_EMAIL && env.EMAIL);
 }
 
 async function notifyEmail(env, summary) {

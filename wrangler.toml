@@ -3,6 +3,11 @@ main = "src/index.js"
 compatibility_date = "2024-08-01"
 account_id = "e990188c49f4ff2cb3c91ff2b210e6ce"
 
+routes = [
+  { pattern = "j-rides.vip", custom_domain = true },
+  { pattern = "www.j-rides.vip", custom_domain = true },
+]
+
 [assets]
 directory = "public"
 binding = "ASSETS"
