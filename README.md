@@ -37,15 +37,18 @@ npx wrangler secret put ADMIN_TOKEN
 npm run deploy
 ```
 
-## Email setup
-
-Run on a machine with Cloudflare API access:
+## Email + booking alerts
 
 ```bash
-./scripts/setup-cloudflare-email.sh
+npx wrangler login
+NOTIFY_EMAIL=your@gmail.com ./scripts/setup-email-and-alerts.sh
 ```
 
-This configures Mailchannels DNS, Email Routing, Email Sending, and deploys the worker.
+This adds your inbox as a Cloudflare **verified destination** (check email to verify), deploys the worker, generates an `ADMIN_TOKEN`, and sends a test alert with full booking details.
+
+**Admin panel:** https://j-rides.vip/admin — paste the token → **Send test alert**.
+
+Optional: `export CLOUDFLARE_API_TOKEN=...` before the script to auto-create the `bookings@j-rides.vip` routing rule via API.
 
 ## Business cards
 
