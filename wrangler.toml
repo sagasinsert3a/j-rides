@@ -1,6 +1,7 @@
 name = "j-rides"
 main = "src/index.js"
 compatibility_date = "2024-08-01"
+account_id = "e990188c49f4ff2cb3c91ff2b210e6ce"
 
 [assets]
 directory = "public"
@@ -8,18 +9,14 @@ binding = "ASSETS"
 
 [[kv_namespaces]]
 binding = "CONFIG"
-id = "REPLACE_WITH_KV_ID"
+id = "e8fa456cf70c489da934306f39491e72"
 
 [vars]
 SITE_URL = "https://j-rides.vip"
 BOOKING_PHONE = "+13238189982"
-NOTIFY_EMAIL = "j@j-ser.com"
-NOTIFY_FROM_EMAIL = "bookings@j-rides.vip"
-MIN_LEAD_MINUTES = "120"
+NOTIFY_EMAIL = "jeffreysila@gmail.com"
+NOTIFY_FROM_EMAIL = "booking@j-rides.vip"
 TIMEZONE = "America/Chicago"
-
-[triggers]
-crons = ["*/15 * * * *"]
 
 [[send_email]]
 name = "EMAIL"
