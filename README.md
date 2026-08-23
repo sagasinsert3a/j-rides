@@ -39,16 +39,29 @@ npm run deploy
 
 ## Email + booking alerts
 
+### Mobile (no localhost link)
+
+**Option A — paste token, I run it:** Create a Cloudflare API token on your phone (steps below), paste it in chat with your inbox address. I'll finish setup.
+
+**Option B — phone dashboard only:**
+
+1. [Cloudflare → Email Routing → Destination addresses](https://dash.cloudflare.com/?to=/:account/email-service/routing) — add your Gmail/iCloud, tap **Verify** in the email they send.
+2. Same page → **Routing rules** → Create: `bookings@j-rides.vip` → forward to your inbox.
+3. [Workers → j-rides → Settings → Variables](https://dash.cloudflare.com/) — set `NOTIFY_EMAIL` to your verified inbox.
+4. Open https://j-rides.vip/admin → if you have an admin token, **Send test alert**.
+
+**Create API token on phone:**
+
+1. https://dash.cloudflare.com/profile/api-tokens
+2. **Create Token** → use **Edit Cloudflare Workers** template
+3. Include permissions: Email Routing, Email Sending (if offered)
+4. Copy token → run (or paste to agent):
+
 ```bash
-npx wrangler login
-NOTIFY_EMAIL=your@gmail.com ./scripts/setup-email-and-alerts.sh
+NOTIFY_EMAIL=you@gmail.com CLOUDFLARE_API_TOKEN=xxx ./scripts/setup-email-and-alerts.sh
 ```
 
-This adds your inbox as a Cloudflare **verified destination** (check email to verify), deploys the worker, generates an `ADMIN_TOKEN`, and sends a test alert with full booking details.
-
-**Admin panel:** https://j-rides.vip/admin — paste the token → **Send test alert**.
-
-Optional: `export CLOUDFLARE_API_TOKEN=...` before the script to auto-create the `bookings@j-rides.vip` routing rule via API.
+Generates `ADMIN_TOKEN`, deploys worker, sends test booking email with full details.
 
 ## Business cards
 
