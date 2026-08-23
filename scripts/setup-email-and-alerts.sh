@@ -12,12 +12,12 @@ SITE_URL="${SITE_URL:-https://j-rides.vip}"
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
-if [[ -z "$NOTIFY_EMAIL" ]]; then
-  echo "Set NOTIFY_EMAIL=your-inbox@gmail.com" >&2
+if [[ -z "$NOTIFY_EMAIL" ]] || [[ "$NOTIFY_EMAIL" == "you@gmail.com" ]]; then
+  echo "Set NOTIFY_EMAIL to your real inbox (not the example you@gmail.com)" >&2
   exit 1
 fi
 
-if [[ -z "${CLOUDFLARE_API_TOKEN:-}" ]]; then
+if [[ -z "${CLOUDFLARE_API_TOKEN:-}" ]] || [[ "$CLOUDFLARE_API_TOKEN" == "paste_token_here" ]]; then
   cat >&2 <<'EOF'
 Need CLOUDFLARE_API_TOKEN (works on mobile — no localhost OAuth).
 
