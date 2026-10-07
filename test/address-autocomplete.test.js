@@ -51,7 +51,7 @@ beforeEach(async () => {
       if (url.hostname === 'photon.komoot.io') {
         calls.push({ type: 'photon', q: url.searchParams.get('q'), url: req.url() });
         const q = url.searchParams.get('q') || '';
-        if (q.includes('Unavailable')) await req.respond(response({}, 503));
+        if (q.includes('Unavailable')) await req.respond(response({}, 500));
         else if (q.includes('Missing')) await req.respond(response({ features: [] }));
         else await req.respond(response({ features: [feature('Test Museum'), feature('Test Gallery', 39.1, -94.59)] }));
       } else if (url.hostname === 'router.project-osrm.org') {
@@ -288,6 +288,21 @@ test('pickup suggestions and current-location coordinates both feed routing with
   assert.ok(calls.filter((call) => call.type === 'route').at(-1).url.includes('/-94.6,39.1;'));
 });
 
+test('a late current-location result cannot replace a subsequently chosen pickup', async () => {
+  await page.evaluate(() => {
+    navigator.geolocation.getCurrentPosition = (success) => { window.finishLocation = success; };
+  });
+  await page.click('#useMyLocation');
+  await page.waitForFunction(() => !!window.finishLocation);
+  await page.click('#pickupChips [data-id="mci"]');
+  await page.evaluate(() => window.finishLocation({
+    coords: { latitude: 39.1, longitude: -94.6, accuracy: 10 },
+  }));
+  await page.waitForFunction(() => !document.querySelector('#useMyLocation').disabled);
+  assert.equal(await page.$eval('#pickup', (el) => el.value), 'Kansas City International Airport (MCI)');
+  assert.equal(await page.$eval('#status', (el) => el.textContent), '');
+});
+
 test('timed-out suggestions preserve the manually entered address', async () => {
   await page.evaluate(() => {
     const originalTimeout = window.setTimeout;
@@ -322,4 +337,74 @@ test('an address edit during routing cannot leave a stale quote', async () => {
   await page.evaluate(() => window.finishRoute());
   assert.equal(await page.$eval('#quoteResult', (el) => el.hidden), true);
   assert.equal(await page.$eval('#quoteJson', (el) => el.value), '');
+});
+
+test('Photon cache, shared request spacing, queued cancellation, and throttle backoff bound network use', async () => {
+  const result = await page.evaluate(async (feature) => {
+    const originalFetch = window.fetch;
+    const originalNow = Date.now;
+    const starts = [];
+    const settings = [];
+    let offset = 0;
+    Date.now = () => originalNow() + offset;
+    window.fetch = async (url, options) => {
+      starts.push(performance.now());
+      settings.push(options);
+      return starts.length === 2
+        ? new Response('{}', { status: 429, headers: { 'Retry-After': '30' } })
+        : new Response(JSON.stringify({ features: [feature] }));
+    };
+    const search = window.JRidesRouting.suggestAddresses;
+    try {
+      await search('Cache first');
+      await search(' cache FIRST ');
+      const controller = new AbortController();
+      const pending = search('Cancelled query', { signal: controller.signal });
+      controller.abort();
+      let cancelled = false;
+      try { await pending; } catch (err) { cancelled = err.name === 'AbortError'; }
+      let throttled = false;
+      try { await search('Throttled query'); } catch { throttled = true; }
+      await search('Cache first'); // Cached results remain usable during backoff.
+      try { await search('Blocked query'); } catch {}
+      const beforeRetry = starts.length;
+      offset += 31000;
+      await search('Recovered query');
+      return { starts, cancelled, throttled, beforeRetry, settings: settings.map(({ credentials, referrerPolicy }) => ({ credentials, referrerPolicy })) };
+    } finally { window.fetch = originalFetch; Date.now = originalNow; }
+  }, feature('Test Museum'));
+  assert.equal(result.cancelled, true);
+  assert.equal(result.throttled, true);
+  assert.equal(result.beforeRetry, 2);
+  assert.equal(result.starts.length, 3);
+  assert.ok(result.starts[1] - result.starts[0] >= 950);
+  assert.ok(result.settings.every((s) => s.credentials === 'omit' && s.referrerPolicy === 'no-referrer'));
+});
+
+test('Photon cache expires and remains bounded; invalid query lengths never send requests', async () => {
+  const result = await page.evaluate(async (feature) => {
+    const originalFetch = window.fetch;
+    const originalNow = Date.now;
+    let now = originalNow();
+    let requests = 0;
+    Date.now = () => now;
+    window.fetch = async () => { requests++; return new Response(JSON.stringify({ features: [feature] })); };
+    const search = window.JRidesRouting.suggestAddresses;
+    try {
+      await search('ab');
+      await search('a'.repeat(321));
+      const beforeValidQuery = requests;
+      await search('Cache zero');
+      for (let i = 1; i <= 30; i++) { now += 1001; await search('Cache ' + i); }
+      now += 1001;
+      await search('Cache zero'); // Oldest query was evicted at the 30-entry cap.
+      const afterEviction = requests;
+      now += 61000;
+      await search('Cache zero');
+      return { beforeValidQuery, afterEviction, afterExpiry: requests };
+    } finally { window.fetch = originalFetch; Date.now = originalNow; }
+  }, feature('Test Museum'));
+  assert.equal(result.beforeValidQuery, 0);
+  assert.equal(result.afterEviction, 32);
+  assert.equal(result.afterExpiry, 33);
 });

@@ -95,9 +95,12 @@
     useMyLocation.addEventListener('click', async () => {
       useMyLocation.disabled = true;
       useMyLocation.textContent = 'Finding you…';
+      invalidateQuote();
+      const locationRevision = quoteRevision;
       setStatus('Getting your location…');
       try {
         const place = await locateMe();
+        if (locationRevision !== quoteRevision) return;
         addresses.get(pickup).setPlace(place);
         const nearby = place.nearby && place.nearby.length
           ? place.nearby
@@ -113,6 +116,7 @@
           'ok'
         );
       } catch (err) {
+        if (locationRevision !== quoteRevision) return;
         console.error(err);
         setStatus(
           (err && err.message) ||

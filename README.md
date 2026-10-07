@@ -34,8 +34,12 @@ No external booking, payment, or notification requests are made. If using an ins
 browser instead of Puppeteer's download, set `PUPPETEER_EXECUTABLE_PATH` to its binary.
 
 Address suggestions reuse the existing Photon endpoint after 3 characters and a
-400 ms pause. Requests cancel when the field changes or closes and time out after
-6 seconds. Selected coordinates stay in memory for routing; checkout still receives
+400 ms pause. Both fields share a 30-query in-memory cache with a 60-second lifetime
+and start at most one suggestion request per second per page. HTTP 429/503 responses
+pause new suggestion requests for 30 seconds by default (or a bounded Retry-After).
+Requests cancel when the field changes or closes and time out after 6 seconds.
+No cache is persisted, and suggestion requests omit credentials and referrers.
+Selected coordinates stay in memory for routing; checkout still receives
 address strings. Editing either address clears the old quote before booking.
 Photon's public server can throttle heavy usage and has no availability guarantee;
 manual entry and popular places remain available if suggestions fail.

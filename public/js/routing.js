@@ -5,6 +5,32 @@
  */
 (function (global) {
   const KC_BIAS = { lat: 39.0997, lon: -94.5786 };
+  // Shared by both fields, scoped to this page only (no persistent address storage).
+  const suggestionCache = new Map();
+  let lastSuggestionRequest = 0;
+  let suggestionsPausedUntil = 0;
+
+  function cachedSuggestions(key) {
+    const cached = suggestionCache.get(key);
+    if (cached && Date.now() - cached.at < 60000) return cached.places.map((p) => ({ ...p }));
+    suggestionCache.delete(key);
+    return null;
+  }
+
+  function waitForSuggestionSlot(delay, signal) {
+    return new Promise((resolve, reject) => {
+      const abort = () => {
+        clearTimeout(timer);
+        reject(new DOMException('Address search cancelled', 'AbortError'));
+      };
+      const timer = setTimeout(() => {
+        signal?.removeEventListener('abort', abort);
+        resolve();
+      }, delay);
+      if (signal?.aborted) abort();
+      else signal?.addEventListener('abort', abort, { once: true });
+    });
+  }
 
   const PRESETS = {
     hq: {
@@ -159,7 +185,20 @@
 
   async function suggestAddresses(query, { signal } = {}) {
     const q = (query || '').trim();
-    if (q.length < 3) return [];
+    if (q.length < 3 || q.length > 320) return [];
+    const key = q.toLowerCase();
+    if (signal?.aborted) throw new DOMException('Address search cancelled', 'AbortError');
+    const cached = cachedSuggestions(key);
+    if (cached) return cached;
+    if (Date.now() < suggestionsPausedUntil) throw new Error('Address suggestions temporarily unavailable');
+    // Waiting searches do not reserve slots: cancelled edits cannot build a queue.
+    while (Date.now() - lastSuggestionRequest < 1000) {
+      await waitForSuggestionSlot(1000 - (Date.now() - lastSuggestionRequest), signal);
+    }
+    if (signal?.aborted) throw new DOMException('Address search cancelled', 'AbortError');
+    const cachedWhileWaiting = cachedSuggestions(key);
+    if (cachedWhileWaiting) return cachedWhileWaiting;
+    if (Date.now() < suggestionsPausedUntil) throw new Error('Address suggestions temporarily unavailable');
     const url = 'https://photon.komoot.io/api/?' + new URLSearchParams({
       q,
       lat: String(KC_BIAS.lat),
@@ -167,7 +206,15 @@
       limit: '5',
       bbox: '-95.3,38.4,-93.9,39.7',
     });
-    const res = await fetch(url, { signal });
+    lastSuggestionRequest = Date.now();
+    const res = await fetch(url, { signal, credentials: 'omit', referrerPolicy: 'no-referrer' });
+    if (res.status === 429 || res.status === 503) {
+      const retry = res.headers.get('Retry-After');
+      const retryMs = retry && /^\d+$/.test(retry)
+        ? Number(retry) * 1000 : Date.parse(retry) - Date.now();
+      suggestionsPausedUntil = Date.now() + (Number.isFinite(retryMs)
+        ? Math.max(1000, Math.min(retryMs, 60000)) : 30000);
+    }
     if (!res.ok) throw new Error('Address suggestions unavailable');
     const data = await res.json();
     const places = [];
@@ -182,7 +229,10 @@
         .filter(Boolean).join(', ');
       if (!label || places.some((place) => place.label === label)) continue;
       places.push({ lat, lon, label });
+      if (places.length === 5) break;
     }
+    suggestionCache.set(key, { at: Date.now(), places });
+    if (suggestionCache.size > 30) suggestionCache.delete(suggestionCache.keys().next().value);
     return places;
   }
 
