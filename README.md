@@ -22,10 +22,19 @@ Flat-rate private rides for Kansas City metro — [j-rides.vip](https://j-rides.
 
 ## Local dev
 
+Use Node.js 22.12 or later (Node 24 is supported). Install the locked development
+dependencies with `npm ci` so local tests and deploy tooling use the reviewed versions.
+
 ```bash
-npm install
+npm ci
 npx wrangler dev
 ```
+
+Puppeteer 25 removes the vulnerable archive/FTP dependency chain used by version 24.
+The version-specific Miniflare override updates `sharp` to 0.35.5 while Wrangler's
+Miniflare 5.20261006.0-alpha dependency still pins 0.35.4. Revisit this override when
+updating Wrangler. These packages are development tools; they are not bundled into
+the Worker or served to site visitors. Run `npm audit` after dependency updates.
 
 ### Tests
 
