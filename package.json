@@ -6,6 +6,7 @@
   "type": "module",
   "scripts": {
     "dev": "wrangler dev",
+    "test": "node --test --test-timeout=20000",
     "deploy": "wrangler deploy",
     "export:vistaprint": "node scripts/export-vistaprint.js"
   },

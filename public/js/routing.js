@@ -157,6 +157,35 @@
     return { lat, lon, label };
   }
 
+  async function suggestAddresses(query, { signal } = {}) {
+    const q = (query || '').trim();
+    if (q.length < 3) return [];
+    const url = 'https://photon.komoot.io/api/?' + new URLSearchParams({
+      q,
+      lat: String(KC_BIAS.lat),
+      lon: String(KC_BIAS.lon),
+      limit: '5',
+      bbox: '-95.3,38.4,-93.9,39.7',
+    });
+    const res = await fetch(url, { signal });
+    if (!res.ok) throw new Error('Address suggestions unavailable');
+    const data = await res.json();
+    const places = [];
+    for (const feature of data.features || []) {
+      const [lon, lat] = feature?.geometry?.coordinates || [];
+      if (!Number.isFinite(lat) || !Number.isFinite(lon) ||
+          lat <= 38.4 || lat >= 39.7 || lon <= -95.3 || lon >= -93.9) continue;
+      const p = feature.properties || {};
+      const street = [p.housenumber, p.street].filter(Boolean).join(' ');
+      const region = [p.state, p.postcode].filter(Boolean).join(' ');
+      const label = [p.name, street, p.city || p.town || p.village, region]
+        .filter(Boolean).join(', ');
+      if (!label || places.some((place) => place.label === label)) continue;
+      places.push({ lat, lon, label });
+    }
+    return places;
+  }
+
   async function reverseGeocode(lat, lon) {
     const url =
       'https://photon.komoot.io/reverse?' +
@@ -247,10 +276,10 @@
     };
   }
 
-  async function estimateTrip(pickupQuery, dropoffQuery) {
+  async function estimateTrip(pickupQuery, dropoffQuery, selected = {}) {
     const [from, to] = await Promise.all([
-      geocode(pickupQuery),
-      geocode(dropoffQuery),
+      selected.from || geocode(pickupQuery),
+      selected.to || geocode(dropoffQuery),
     ]);
     const trip = await routeDrive(from, to);
     return trip;
@@ -261,6 +290,7 @@
     presetsByKind,
     nearbyPresets,
     geocode,
+    suggestAddresses,
     reverseGeocode,
     locateMe,
     routeDrive,

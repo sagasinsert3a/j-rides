@@ -46,21 +46,25 @@
 
         <form id="quoteForm" class="quote-form" novalidate>
           <div class="fields">
-            <label class="field">
+            <div class="field">
               <span class="field-top">
-                Pickup
+                <label for="pickup">Pickup</label>
                 <button type="button" class="loc-btn" id="useMyLocation" title="Use my current location">
                   Use my location
                 </button>
               </span>
-              <input id="pickup" name="pickup" type="text" autocomplete="street-address" list="popular-pickups" placeholder="Address or place" value="7521 Anderson St, Lenexa, KS 66227" required>
+              <div class="address-autocomplete">
+                <input id="pickup" name="pickup" type="text" autocomplete="street-address" list="popular-pickups" placeholder="Address or place" value="7521 Anderson St, Lenexa, KS 66227" maxlength="320" required>
+              </div>
               <datalist id="popular-pickups"></datalist>
-            </label>
-            <label class="field">
-              <span>Dropoff</span>
-              <input id="dropoff" name="dropoff" type="text" autocomplete="street-address" placeholder="Where are you going?" list="popular-drops" required>
+            </div>
+            <div class="field">
+              <span><label for="dropoff">Dropoff</label></span>
+              <div class="address-autocomplete">
+                <input id="dropoff" name="dropoff" type="text" autocomplete="street-address" placeholder="Where are you going?" list="popular-drops" maxlength="320" required>
+              </div>
               <datalist id="popular-drops"></datalist>
-            </label>
+            </div>
           </div>
 
           <div class="chip-block">
@@ -183,6 +187,7 @@
   <script src="js/pricing.js"></script>
   <script src="js/live-market.js"></script>
   <script src="js/routing.js"></script>
+  <script src="js/address-autocomplete.js"></script>
   <script src="js/site.js"></script>
 <script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a2f73a7a38afd322',t:'MTc4NzQ1NzgxNg=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>

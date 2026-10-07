@@ -12,6 +12,7 @@ Flat-rate private rides for Kansas City metro — [j-rides.vip](https://j-rides.
 ## Features
 
 - Live route quotes (Photon geocoding + OSRM)
+- Pickup/dropoff address suggestions with keyboard and touch selection; manual entry still works
 - Uber Premier / Lyft Extra Comfort comparison with savings headline
 - Near-live market calibration via admin sample log
 - Stripe pay-and-book with 2-hour minimum lead time
@@ -25,6 +26,19 @@ Flat-rate private rides for Kansas City metro — [j-rides.vip](https://j-rides.
 npm install
 npx wrangler dev
 ```
+
+### Tests
+
+`npm test` uses Puppeteer with mocked Photon/OSRM responses and synthetic addresses.
+No external booking, payment, or notification requests are made. If using an installed
+browser instead of Puppeteer's download, set `PUPPETEER_EXECUTABLE_PATH` to its binary.
+
+Address suggestions reuse the existing Photon endpoint after 3 characters and a
+400 ms pause. Requests cancel when the field changes or closes and time out after
+6 seconds. Selected coordinates stay in memory for routing; checkout still receives
+address strings. Editing either address clears the old quote before booking.
+Photon's public server can throttle heavy usage and has no availability guarantee;
+manual entry and popular places remain available if suggestions fail.
 
 ## Deploy
 

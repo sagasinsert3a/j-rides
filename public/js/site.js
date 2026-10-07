@@ -6,6 +6,7 @@
     locateMe,
     presetsByKind,
     nearbyPresets,
+    suggestAddresses,
   } = window.JRidesRouting;
   const { snapshot, addSample } = window.JRidesLiveMarket;
 
@@ -22,7 +23,25 @@
 
   let lastQuote = null;
   let lastTrip = null;
-  let userCoords = null;
+  let quoteRevision = 0;
+
+  function invalidateQuote() {
+    quoteRevision++;
+    lastQuote = null;
+    lastTrip = null;
+    resultEl.hidden = true;
+    document.getElementById('quoteJson').value = '';
+    quoteBtn.disabled = false;
+    setStatus('');
+  }
+
+  const addresses = new Map([pickup, dropoff].map((input) => [input,
+    window.JRidesAddressAutocomplete.attach(input, {
+      search: suggestAddresses,
+      presets: presetsByKind(input.id),
+      onChange: invalidateQuote,
+    }),
+  ]));
 
   const DEFAULT_DROPOFFS = ['mci', 'loews', 'plaza', 'union', 'power', 'legends'];
   const DEFAULT_PICKUPS = ['hq', 'mci', 'plaza', 'op', 'union', 'crown'];
@@ -53,7 +72,7 @@
           ? '<small>' + p.miles + ' mi</small>'
           : '');
       btn.addEventListener('click', () => {
-        targetInput.value = p.address;
+        addresses.get(targetInput).setPlace({ label: p.address, lat: p.lat, lon: p.lon });
         container.querySelectorAll('button').forEach((b) => b.classList.remove('is-active'));
         btn.classList.add('is-active');
       });
@@ -79,8 +98,7 @@
       setStatus('Getting your location…');
       try {
         const place = await locateMe();
-        userCoords = { lat: place.lat, lon: place.lon };
-        pickup.value = place.label;
+        addresses.get(pickup).setPlace(place);
         const nearby = place.nearby && place.nearby.length
           ? place.nearby
           : nearbyPresets(place.lat, place.lon, 'pickup', 6);
@@ -200,12 +218,18 @@
 
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
+    addresses.forEach((address) => address.close());
+    const requestRevision = ++quoteRevision;
     resultEl.hidden = true;
     setStatus('Calculating live route + near-live market prices…');
     quoteBtn.disabled = true;
 
     try {
-      const trip = await estimateTrip(pickup.value, dropoff.value);
+      const trip = await estimateTrip(pickup.value, dropoff.value, {
+        from: addresses.get(pickup).getSelection(),
+        to: addresses.get(dropoff).getSelection(),
+      });
+      if (requestRevision !== quoteRevision) return;
       if (trip.miles < 0.5) {
         throw new Error('That trip looks too short — check pickup and dropoff.');
       }
@@ -218,6 +242,7 @@
       );
       renderQuote(quote);
     } catch (err) {
+      if (requestRevision !== quoteRevision) return;
       console.error(err);
       setStatus(
         (err && err.message) ||
@@ -225,7 +250,7 @@
         'error'
       );
     } finally {
-      quoteBtn.disabled = false;
+      if (requestRevision === quoteRevision) quoteBtn.disabled = false;
     }
   });
 
