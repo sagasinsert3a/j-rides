@@ -1,0 +1,7 @@
+# Vendor default for staying current (J, Nov 21 2026: no pins, latest everywhere).
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: daily
