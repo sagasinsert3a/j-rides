@@ -100,3 +100,8 @@ Generates `ADMIN_TOKEN`, deploys worker, sends test booking email with full deta
 - Site: https://j-rides.vip
 - Admin: https://j-rides.vip/admin
 - Phone: (323) 818-9982
+
+## Domain & Card Assets
+
+- Registrar: Cloudflare, expires 2027-07-22 (`craig/elinore.ns.cloudflare.com`)
+- Card designs: `assets/j-rides-minimal-original-front.png`, `assets/j-rides-minimal-original-back.png`
