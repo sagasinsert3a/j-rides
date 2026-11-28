@@ -1,6 +1,6 @@
 name = "j-rides"
 main = "src/index.js"
-compatibility_date = "2024-08-01"
+compatibility_date = "2026-11-27"
 account_id = "e990188c49f4ff2cb3c91ff2b210e6ce"
 
 routes = [
@@ -27,3 +27,9 @@ MIN_LEAD_MINUTES = "120"
 [[send_email]]
 name = "EMAIL"
 remote = true
+
+[observability]
+enabled = true
+
+[observability.traces]
+enabled = true
